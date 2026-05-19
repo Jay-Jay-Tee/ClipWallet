@@ -125,6 +125,7 @@ impl Engine {
     }
 
     fn write_and_paste(&mut self, data: &ClipData) {
+        println!("DEBUG: write_and_paste called");
         if self.sync_to_system_clipboard(data) {
             std::thread::sleep(std::time::Duration::from_millis(PASTE_SETTLE_MS));
             simulate_paste();
@@ -222,6 +223,7 @@ impl Engine {
     }
 
     fn static_paste(&mut self, slot: usize) {
+        println!("DEBUG: static_paste called — write_and_paste NOT used");
         let data = self.static_store.read(slot).map(|e| e.data.clone());
         match data {
             Some(d) => {
@@ -312,6 +314,7 @@ impl Engine {
     }
 
     fn dynamic_paste(&mut self) {
+        println!("DEBUG: dynamic_paste called — write_and_paste NOT used");
         let data = {
             let ram = self.ram.read().unwrap();
             ram.current_dynamic().map(|e| (e.id, e.data.clone(), ram.dynamic_cursor, ram.ring_len()))

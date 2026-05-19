@@ -1,0 +1,44 @@
+name: Prove write_and_paste is Dead Code
+
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+jobs:
+  dead-code-check:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build and capture dead code warnings
+        run: |
+          echo "=== Building ClipWallet on macOS ==="
+          RUSTFLAGS="-W dead-code" cargo build 2>&1 | tee build_output.txt
+          echo ""
+          echo "=== Searching for write_and_paste warnings ==="
+          grep -n "write_and_paste" build_output.txt || echo "(no compiler warning found for write_and_paste)"
+
+      - name: Grep all call sites of write_and_paste in source
+        run: |
+          echo "=== Every occurrence of 'write_and_paste' in src/ ==="
+          grep -rn "write_and_paste" src/ || echo "(not found)"
+          echo ""
+          echo "NOTE: Only one hit = only the definition, zero callers = dead code"
+
+      - name: Upload build log as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: build_output.txt
